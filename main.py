@@ -1,4 +1,4 @@
-﻿import discord, asyncio, random, datetime, asyncpraw, database_functions, os
+﻿import discord, asyncio, random, datetime, database_functions, os, requests
 from discord.ext import tasks, commands
 
 # Bot Setup 
@@ -17,11 +17,6 @@ client.setup_guilds = []
 
 # Minesweeper Dictionary
 client.minesweeper = {}
-
-# PRAW Setup
-reddit_id = 'x-CeFNb7pjkh7w'
-reddit_secret = 'YutzD0KuEUw1X2TrSZsMKvjW5MpylQ'
-reddit = asyncpraw.Reddit(client_id = reddit_id, client_secret = reddit_secret, user_agent = f'python:{reddit_id}:1.0 (by u/ahkh78)')
 
 # XP File Reset
 for file in os.listdir():
@@ -176,9 +171,8 @@ ttt_board = [':one:', ':two:', ':three:', ':four:', ':five:', ':six:', ':seven:'
 async def on_reaction_add(reaction, user):
     if user == client.user:
         return
-    if str(reaction.message.guild.id) in client.setup_guilds:
-        return
-    if user.id == client.user.id: return
+    if is_text_channel(reaction.message) or not is_text_channel(reaction.message):
+        pass
     print(f'reaction id is {reaction.emoji}')
     for x in reaction.message.reactions:
         if x.emoji == discord.utils.get(discord.utils.get(client.guilds, name = 'Quartermaster Spaghetti\'s emotes').emojis, name = 'QuartermasterSpaghetti'):
@@ -211,6 +205,11 @@ async def on_reaction_add(reaction, user):
             elif reaction.emoji == '6️⃣':
                 print('reaction is 6')
                 await reaction.message.edit(embed = help_embed(5))
+                await reaction.message.remove_reaction(reaction.emoji, user)
+
+            elif reaction.emoji == '7️⃣':
+                print('reaction is 6')
+                await reaction.message.edit(embed = help_embed(6))
                 await reaction.message.remove_reaction(reaction.emoji, user)
                 
         elif x.emoji == discord.utils.get(discord.utils.get(client.guilds, name = 'Quartermaster Spaghetti\'s emotes').emojis, name = 'tictactoe'):
@@ -1158,6 +1157,7 @@ async def about(ctx):
     await bot_msg.add_reaction('4️⃣')
     await bot_msg.add_reaction('5️⃣')
     await bot_msg.add_reaction('6️⃣')
+    await bot_msg.add_reaction('7️⃣')
     if client.update_released:
         if random.randint(1, 100) >= 75:
             await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
@@ -1260,6 +1260,278 @@ async def leaderboard(ctx):
 @client.command()
 async def updates(ctx):
     await ctx.send(embed = client.update_embed)
+
+@client.command()
+async def covid(ctx, *, country_name = 'World'):
+    confirmed = 0
+    today_cases = 0
+    deaths = 0
+    today_deaths = 0
+    recovered = 0
+    active = 0
+    critical = 0
+    cases_per_mil = 0
+    deaths_per_mil = 0
+    tests = 0
+    tests_per_mil = 0
+    try:
+        url = f'https://coronavirus-19-api.herokuapp.com/countries/{country_name}'
+        stats = requests.get(url)
+        json_stats = stats.json()
+        country_name = json_stats['country']
+        confirmed = json_stats['cases']
+        today_cases = json_stats['todayCases']
+        deaths = json_stats['deaths']
+        today_deaths = json_stats['todayDeaths']
+        recovered = json_stats['recovered']
+        active = json_stats['active']
+        critical = json_stats['critical']
+        cases_per_mil = json_stats['casesPerOneMillion']
+        deaths_per_mil = json_stats['deathsPerOneMillion']
+        tests = json_stats['totalTests']
+        tests_per_mil = json_stats['testsPerOneMillion']
+    except:
+        await ctx.send('Invalid country name.')
+        return
+    embed = discord.Embed(title = f'Latest Data about COVID-19 in {country_name}:', color = discord.Color.red())
+    embed.add_field(name = 'Confirmed Cases:', value = f'{format(confirmed, ",d")} cases', inline = True)
+    embed.add_field(name = 'Deaths:', value = f'{format(deaths, ",d")} deaths', inline = True)
+    embed.add_field(name = 'Recovered Cases:', value = f'{format(recovered, ",d")} recoveries', inline = True)
+    embed.add_field(name = 'Today\'s Confirmed Cases:', value = f'{format(today_cases, ",d")} cases', inline = True)
+    embed.add_field(name = 'Today\'s Deaths:', value = f'{format(today_deaths, ",d")} deaths', inline = True)
+    embed.add_field(name = 'Active Cases:', value = f'{format(active, ",d")} cases', inline = True)
+    embed.add_field(name = 'Cases Per One Million:', value = f'{format(cases_per_mil, ",d")} cases', inline = True)
+    embed.add_field(name = 'Deaths Per One Million:', value = f'{format(deaths_per_mil, ",d")} deaths', inline = True)
+    embed.add_field(name = 'Critical Cases:', value = f'{format(critical, ",d")} critical cases', inline = True)
+    embed.add_field(name = 'Total Tests:', value = f'{format(tests, ",d")} tests', inline = True)
+    embed.add_field(name = 'Tests Per One Million:', value = f'{format(tests_per_mil, ",d")} tests', inline = True)
+    embed.add_field(name = '‎', value = '‎', inline = True)
+    await ctx.send(embed = embed)
+
+@client.command()
+async def covidcountrylist(ctx):
+    dm = await ctx.author.create_dm()
+    await dm.send(embed = discord.Embed(title = 'List of supported countries 1:', description = """USA
+Brazil
+India
+France
+Russia
+UK
+Italy
+Spain
+Turkey
+Germany
+Colombia
+Argentina
+Poland
+Mexico
+Iran
+Ukraine
+South Africa
+Peru
+Czechia
+Indonesia
+Netherlands
+Chile
+Canada
+Romania
+Belgium
+Iraq
+Israel
+Portugal
+Sweden
+Philippines
+Pakistan
+Hungary
+Bangladesh
+Jordan
+Switzerland
+Serbia
+Austria
+Morocco
+Japan
+Lebanon
+UAE
+Saudi Arabia
+Slovakia
+Panama
+Malaysia
+Bulgaria
+Ecuador
+Belarus
+Georgia
+Nepal
+Bolivia
+Croatia
+Greece
+Azerbaijan
+Dominican Republic
+Tunisia
+Kazakhstan
+Palestine
+Ireland
+Denmark
+Kuwait
+Moldova
+Lithuania
+Costa Rica
+Slovenia
+Paraguay
+Ethiopia
+Egypt
+Guatemala
+Armenia
+Honduras
+Qatar
+Bosnia and Herzegovina
+Nigeria
+Libya
+Oman
+Venezuela
+Bahrain
+Myanmar
+Kenya
+North Macedonia
+Albania
+Algeria
+Estonia
+S. Korea
+Latvia
+Uruguay
+Norway
+Sri Lanka
+Montenegro
+Ghana
+Kyrgyzstan
+Zambia
+Uzbekistan
+Finland
+Cuba
+Mozambique
+El Salvador
+Luxembourg
+Singapore
+Afghanistan
+Cameroon
+Cyprus
+Namibia
+Ivory Coast
+Uganda
+Botswana
+Jamaica
+Senegal
+Zimbabwe""", color = discord.Color.dark_red()))
+    await dm.send(embed = discord.Embed(title = 'List of supported countries 2:', description = """Malawi
+Sudan
+Australia
+Malta
+Thailand
+DRC
+Madagascar
+Maldives
+Angola
+Rwanda
+Guinea
+Mayotte
+Gabon
+Syria
+French Polynesia
+Mauritania
+Eswatini
+Cabo Verde
+French Guiana
+Réunion
+Tajikistan
+Haiti
+Burkina Faso
+Belize
+Andorra
+Hong Kong
+Guadeloupe
+Somalia
+Lesotho
+Guyana
+South Sudan
+Togo
+Mali
+Congo
+Aruba
+Suriname
+Bahamas
+Mongolia
+Trinidad and Tobago
+Curaçao
+Martinique
+Djibouti
+Benin
+Equatorial Guinea
+Nicaragua
+Iceland
+Papua New Guinea
+Gambia
+CAR
+Niger
+San Marino
+Chad
+Gibraltar
+Saint Lucia
+Seychelles
+Yemen
+Channel Islands
+Sierra Leone
+Comoros
+Guinea-Bissau
+Barbados
+Eritrea
+Burundi
+Liechtenstein
+Vietnam
+New Zealand
+Cambodia
+Turks and Caicos
+Monaco
+Sao Tome and Principe
+Sint Maarten
+Liberia
+St. Vincent Grenadines
+Saint Martin
+Isle of Man
+Caribbean Netherlands
+Antigua and Barbuda
+Bermuda
+Taiwan
+Mauritius
+Bhutan
+St. Barth
+Diamond Princess
+Faeroe Islands
+Timor-Leste
+Tanzania
+Cayman Islands
+Wallis and Futuna
+Brunei
+Dominica
+Grenada
+British Virgin Islands
+New Caledonia
+Fiji
+Falkland Islands
+Laos
+Macao
+Saint Kitts and Nevis
+Greenland
+Vatican City
+Anguilla
+Saint Pierre Miquelon
+Montserrat
+Solomon Islands
+Western Sahara
+MS Zaandam
+Marshall Islands
+Samoa
+Vanuatu
+Micronesia
+China""", color = discord.Color.dark_red()))
 
 # Game Commands
 @client.command(aliases = ['ttt'])
@@ -1717,6 +1989,148 @@ async def minesweeper(ctx, dim_size = 10, num_bombs = 10):
             del client.minesweeper[f'{ctx.author.id}']
         except:
             pass
+
+words = [{'word': 'Fridge', 'hint': 'Appliances'}, {'word': 'Freezer', 'hint': 'Appliances'}, {'word': 'Heater', 'hint': 'Appliances'}, {'word': 'Fan', 'hint': 'Appliances'}, {'word': 'Washer', 'hint': 'Appliances'}, {'word': 'Dryer', 'hint': 'Appliances'}, {'word': 'Microwave', 'hint': 'Appliances'}, {'word': 'Hairdryer', 'hint': 'Appliances'}, {'word': 'Dishwasher', 'hint': 'Appliances'}, {'word': 'Computer', 'hint': 'Technology'}, {'word': 'Keyboard', 'hint': 'Technology'}, {'word': 'Mouse', 'hint': 'Technology'}, {'word': 'Laptop', 'hint': 'Technology'}, {'word': 'Tablet', 'hint': 'Technology'}, {'word': 'Phone', 'hint': 'Technology'}, {'word': 'Apple', 'hint': 'Technology'}, {'word': 'Videogames', 'hint': 'Technology'}, {'word': 'Samsung', 'hint': 'Technology'}, {'word': 'Sony', 'hint': 'Technology'}, {'word': 'Microsoft', 'hint': 'Technology'}, {'word': 'XBOX', 'hint': 'Technology'}, {'word': 'Wifi', 'hint': 'Technology'}, {'word': 'Website', 'hint': 'Technology'}, {'word': 'File', 'hint': 'Technology'}, {'word': 'Account', 'hint': 'Technology'}, {'word': 'Airplane', 'hint': 'Transportation'}, {'word': 'Airport', 'hint': 'Transportation'}, {'word': 'Train', 'hint': 'Transportation'}, {'word': 'Subway', 'hint': 'Transportation'}, {'word': 'Bus', 'hint': 'Transportation'}, {'word': 'Car', 'hint': 'Transportation'}, {'word': 'Bike', 'hint': 'Transportation'}, {'word': 'Taxi', 'hint': 'Transportation'}, {'word': 'Road', 'hint': 'Transportation'}, {'word': 'Street', 'hint': 'Transportation'}, {'word': 'College', 'hint': 'School'}, {'word': 'University', 'hint': 'School'}, {'word': 'Classroom', 'hint': 'School'}, {'word': 'Classmate', 'hint': 'School'}, {'word': 'Teacher', 'hint': 'School'}, {'word': 'Professor', 'hint': 'School'}, {'word': 'Student', 'hint': 'School'}, {'word': 'Major', 'hint': 'School'}, {'word': 'Degree', 'hint': 'School'}, {'word': 'Homework', 'hint': 'School'}, {'word': 'Project', 'hint': 'School'}, {'word': 'Exam', 'hint': 'School'}, {'word': 'Break', 'hint': 'School'}, {'word': 'Doctor', 'hint': 'Occupation/Job'}, {'word': 'Lawyer', 'hint': 'Occupation/Job'}, {'word': 'Nurse', 'hint': 'Occupation/Job'}, {'word': 'Manager', 'hint': 'Occupation/Job'}, {'word': 'Chef', 'hint': 'Occupation/Job'}, {'word': 'Police', 'hint': 'Occupation/Job'}, {'word': 'Engineer', 'hint': 'Occupation/Job'}, {'word': 'Parents', 'hint': 'Family Members'}, {'word': 'Dad', 'hint': 'Family Members'}, {'word': 'Mom', 'hint': 'Family Members'}, {'word': 'Siblings', 'hint': 'Family Members'}, {'word': 'Brother', 'hint': 'Family Members'}, {'word': 'Sister', 'hint': 'Family Members'}, {'word': 'Uncle', 'hint': 'Family Members'}, {'word': 'Aunt', 'hint': 'Family Members'}, {'word': 'nephew', 'hint': 'Family Members'}, {'word': 'Niece', 'hint': 'Family Members'}, {'word': 'Cousin', 'hint': 'Family Members'}, {'word': 'Husband', 'hint': 'Family Members'}, {'word': 'Wife', 'hint': 'Family Members'}, {'word': 'Head', 'hint': 'Body Parts'}, {'word': 'Shoulder', 'hint': 'Body Parts'}, {'word': 'Arm', 'hint': 'Body Parts'}, {'word': 'Hand', 'hint': 'Body Parts'}, {'word': 'Finger', 'hint': 'Body Parts'}, {'word': 'Leg', 'hint': 'Body Parts'}, {'word': 'Foot', 'hint': 'Body Parts'}, {'word': 'Toe', 'hint': 'Body Parts'}, {'word': 'Chest', 'hint': 'Body Parts'}, {'word': 'Face', 'hint': 'Body Parts'}, {'word': 'Eye', 'hint': 'Body Parts'}, {'word': 'Nose', 'hint': 'Body Parts'}, {'word': 'Mouth', 'hint': 'Body Parts'}, {'word': 'Ear', 'hint': 'Body Parts'}, {'word': 'Today', 'hint': 'Time'}, {'word': 'Day', 'hint': 'Time'}, {'word': 'Week', 'hint': 'Time'}, {'word': 'Month', 'hint': 'Time'}, {'word': 'Year', 'hint': 'Time'}, {'word': 'Hour', 'hint': 'Time'}, {'word': 'Minute', 'hint': 'Time'}, {'word': 'Second', 'hint': 'Time'}, {'word': 'Calendar', 'hint': 'Time'}, {'word': 'Date', 'hint': 'Time'}, {'word': 'Sunday', 'hint': 'Days of the Week'}, {'word': 'Monday', 'hint': 'Days of the Week'}, {'word': 'Tuesday', 'hint': 'Days of the Week'}, {'word': 'Wednesday', 'hint': 'Days of the Week'}, {'word': 'Thursday', 'hint': 'Days of the Week'}, {'word': 'Friday', 'hint': 'Days of the Week'}, {'word': 'Saturday', 'hint': 'Days of the Week'}, {'word': 'amogus', 'hint': 'sus'}]
+def get_word():
+    word = random.choice(words)
+    return word
+
+@client.command()
+async def hangman(ctx):
+    word_dict = get_word()
+    word = word_dict['word'].upper()
+    hint = word_dict['hint']
+    word_completion = '_ ' * len(word)
+    guessed = False
+    guessed_letters = []
+    guessed_words = []
+    tries = 6
+    message = await ctx.send(embed = hangman_embed(ctx.message, ctx.author, f'```{display_hangman(tries)}\n{word_completion}\nYour hint is: {hint}!\n\nGuessed letters: None\nGuessed words: None```'))
+    while not guessed and tries > 0:
+        guess_msg = await client.wait_for('message', check = lambda e: e.author == ctx.author and e.channel == ctx.channel)
+        guess = guess_msg.content.upper()
+        await guess_msg.delete()
+        if guess.isalpha():
+            length = len(guess)
+            if length == 1:
+                if guess in guessed_letters:
+                    await ctx.send(f'You already guessed the letter {guess}', delete_after = 2)
+                elif not guess in word:
+                    await ctx.send(f'{guess} isn\'t in the word.', delete_after = 2)
+                    tries -= 1
+                    guessed_letters.append(guess)
+                    await message.edit(embed = hangman_embed(ctx.message, ctx.author, f'```{display_hangman(tries)}\n{word_completion}\nYour hint is: {hint}!\n\nGuessed letters: {str(guessed_letters)[1:-1] if not len(guessed_letters) == 0 else "None"}\nGuessed words: {str(guessed_words)[1:-1] if not len(guessed_words) == 0 else "None"}```'))
+                else:
+                    await ctx.send(f'Good job, {guess} is in the word!', delete_after = 2)
+                    guessed_letters.append(guess)
+                    word_as_list = word_completion.split()
+                    indices = [i for i, letter in enumerate(word) if letter == guess]
+                    for idx in indices:
+                        word_as_list[idx] = guess
+                    word_completion = ' '.join(word_as_list)
+                    if not '_' in word_completion:
+                        guessed = True
+                        await message.edit(embed = hangman_embed(ctx.message, ctx.author, f'```{display_hangman(tries)}\n{word_completion}\nYour hint is: {hint}!\n\nGuessed letters: {str(guessed_letters)[1:-1] if not len(guessed_letters) == 0 else "None"}\nGuessed words: {str(guessed_words)[1:-1] if not len(guessed_words) == 0 else "None"}```'))
+                        
+            elif length == len(word):
+                if guess in guessed_words:
+                    await ctx.send('You already guessed that word!', delete_after = 2)
+                elif not guess == word:
+                    await ctx.send(f'{guess} is not the word!', delete_after = 2)
+                    tries -= 1
+                    guessed_words.append(guess)
+                    await message.edit(embed = hangman_embed(ctx.message, ctx.author, f'```{display_hangman(tries)}\n{word_completion}\nYour hint is: {hint}!\n\nGuessed letters: {str(guessed_letters)[1:-1] if not len(guessed_letters) == 0 else "None"}\nGuessed words: {str(guessed_words)[1:-1] if not len(guessed_words) == 0 else "None"}```'))
+                else:
+                    guessed = True
+                    word_completion = word
+                    guessed_words.append(guess)
+                    await message.edit(embed = hangman_embed(ctx.message, ctx.author, f'```{display_hangman(tries)}\n{word_completion}\nYour hint is: {hint}!\n\nGuessed letters: {str(guessed_letters)[1:-1] if not len(guessed_letters) == 0 else "None"}\nGuessed words: {str(guessed_words)[1:-1] if not len(guessed_words) == 0 else "None"}```'))
+        await message.edit(embed = hangman_embed(ctx.message, ctx.author, f'```{display_hangman(tries)}\n{word_completion}\nYour hint is: {hint}!\n\nGuessed letters: {str(guessed_letters)[1:-1] if not len(guessed_letters) == 0 else "None"}\nGuessed words: {str(guessed_words)[1:-1] if not len(guessed_words) == 0 else "None"}```'))
+    if guessed:
+        await ctx.send(f'Congratulations! You guessed the word, {word}!')
+        if word == 'amogus':
+            database_functions.add_xp(ctx.guild.id, ctx.author.id, 100)
+            await ctx.send('Here, take ONLY 1 XP!')
+        else:
+            xp = round(len(word) / 1.5)
+            database_functions.add_xp(ctx.guild.id, ctx.author.id, xp)
+            await ctx.send(f'Here, take {xp} XP!')
+    else:
+        await ctx.send(f'Sorry, you ran out of tries. The word was {word}. Better luck next time!')
+
+def display_hangman(tries):
+    stages = [  # final state: head, torso, both arms, and both legs
+                """
+                   --------
+                   |      |
+                   |      O
+                   |     \\|/
+                   |      |
+                   |     / \\
+                   -
+                """,
+                # head, torso, both arms, and one leg
+                """
+                   --------
+                   |      |
+                   |      O
+                   |     \\|/
+                   |      |
+                   |     / 
+                   -
+                """,
+                # head, torso, and both arms
+                """
+                   --------
+                   |      |
+                   |      O
+                   |     \\|/
+                   |      |
+                   |      
+                   -
+                """,
+                # head, torso, and one arm
+                """
+                   --------
+                   |      |
+                   |      O
+                   |     \\|
+                   |      |
+                   |     
+                   -
+                """,
+                # head and torso
+                """
+                   --------
+                   |      |
+                   |      O
+                   |      |
+                   |      |
+                   |     
+                   -
+                """,
+                # head
+                """
+                   --------
+                   |      |
+                   |      O
+                   |    
+                   |      
+                   |     
+                   -
+                """,
+                # initial empty state
+                """
+                   --------
+                   |      |
+                   |      
+                   |    
+                   |      
+                   |     
+                   -
+                """
+    ]
+    return stages[tries]
 
 # Admin Commands
 @client.command()
@@ -2287,7 +2701,7 @@ async def newupdate(ctx, send_updates = 'no', title = '', description = '', date
 def setup_embed():
     embed = discord.Embed(
         title = 'Thank you for choosing me! Please enter the following commands with the correct syntax and order:',
-        description = f'**{prefix}setadmin <role_ping>**\nSets the role that every admin should have in order to use moderation commands.\n**{prefix}setmuted <role_ping>**\nSets the muted role.\n**{prefix}setlogs <channel_ping>**\nSets the logs channel.\n**(optional) {prefix}setlevel <level_num> <xp_to_get> <role_ping>**\nSets a level that can be achieved after getting the specified XP. You can set as many levels as you want.\n\nIn case you mess up something, you can always reset the settings with `{prefix}resetsettings` and set everything up again.',
+        description = f'**{prefix}setadmin <role_ping>**\nSets the role that every admin should have in order to use moderation commands.\n**{prefix}setmuted <role_ping>**\nSets the muted role.\n**{prefix}setlogs <channel_ping>**\nSets the logs channel.\n**(optional) {prefix}setlevel <level_num> <xp_to_get> <role_ping>**\nSets a level that can be achieved after getting the specified XP. You can set as many levels as you want.\n\nIn case you mess up something, you can just redo a command, but you can always reset the settings with `{prefix}resetsettings` and set everything up again.',
     )
     embed.set_footer(text = 'Quartermaster Spaghetti')
     return embed
@@ -2317,7 +2731,7 @@ def log_embed(message, delete):
 def help_embed(page):
     embed1 = discord.Embed(
         title = '***PAGE 1: Thank you so much for choosing me!***',
-        description = 'Quartermaster Spaghetti is growing, if not by a teeny tiny amount. It would be a lot of help if you contacted my brother Captain Ravioli for suggestions or problems, preferrably in the support server, or alternatively  with the contact support email (quartermasterspaghetti.contact@gmail.com), and if I don\'t reply in 2 days, you can DM him. Thank you again!\n\nPlease create a channel called `bot-setup` and run the command `{prefix}setup` there.\n*You can switch pages with the reactions!*',
+        description = f'Quartermaster Spaghetti is growing, if not by a teeny tiny amount. It would be a lot of help if you contacted my brother Captain Ravioli for suggestions or problems, preferrably in the support server, or alternatively  with the contact support email (quartermasterspaghetti.contact@gmail.com), and if I don\'t reply in 2 days, you can DM him. Thank you again!\n\nPlease create a channel called `bot-setup` and run the command `{prefix}setup` there.\n*You can switch pages with the reactions!*',
         color = discord.Color.from_rgb(255, 255, 0)
     )
     embed1.add_field(
@@ -2327,7 +2741,7 @@ def help_embed(page):
     embed2 = discord.Embed(
         title = '***PAGE 2: Global Commands:***',
         description =
-        f'**{prefix}about / {prefix}help**\nYou just activated this command!\n**{prefix}ping / {prefix}pong**\nShows the bot\'s ping\n**{prefix}avatar <(optional) user_ping>**\nShows the mentioned user\'s avatar.\n**{prefix}userinfo / {prefix}ui <(optional) user_ping>**\nShows some information about the mentioned user or the sender.\n**{prefix}serverinfo / {prefix}si**\nShows some information about the server that you called the command in.\n**{prefix}showwarns / {prefix}warns / {prefix}warnings / {prefix}showwarnings <(optional) user_ping>**\nShows the author\'s or mentioned user\'s warnings.\n**{prefix}leaderboard**\nShows the server\'s leaderboard.\n**{prefix}level**\nShows some of the sender\'s info related to levels.\n**{prefix}updates**\nCalling this sends the latest update that Captain Ravioli sent.',
+        f'**{prefix}about / {prefix}help**\nYou just activated this command!\n**{prefix}ping / {prefix}pong**\nShows the bot\'s ping\n**{prefix}avatar <(optional) user_ping>**\nShows the mentioned user\'s avatar.\n**{prefix}userinfo / {prefix}ui <(optional) user_ping>**\nShows some information about the mentioned user or the sender.\n**{prefix}serverinfo / {prefix}si**\nShows some information about the server that you called the command in.\n**{prefix}showwarns / {prefix}warns / {prefix}warnings / {prefix}showwarnings <(optional) user_ping>**\nShows the author\'s or mentioned user\'s warnings.\n**{prefix}leaderboard**\nShows the server\'s leaderboard.\n**{prefix}level**\nShows some of the sender\'s info related to levels.\n**{prefix}covid <country_name>**\nSends some COVID-19 information about the country. By default, the global information is chosen.\n**{prefix}covidcountrylist**\nShows a list of supported country names.\n**{prefix}updates**\nCalling this sends the latest update that Captain Ravioli sent.',
         color=discord.Color.blue()
     )
     embed3 = discord.Embed(
@@ -2346,11 +2760,15 @@ def help_embed(page):
         color = discord.Color.blue()
     )
     embed6 = discord.Embed(
-        title = '***PAGE 6: Games:***',
-        description = f'For now, the bot only supports Tic Tac Toe, Single-Player Battleship, and Minesweeper, but there are gonna be updates for the bot in which introduce new games that you can vote on in the support server! Here are the commands:\n\n*Tic Tac Toe:*\n**{prefix}tictactoe / {prefix}ttt <user_ping>**\nChallenges the mentioned user to a Tic Tac Toe game.\n**{prefix}accepttictactoe / {prefix}acceptttt\n**Accepts the challenge and starts a Tic Tac Toe Game.\n**{prefix}canceltictactoe / {prefix}cancelttt**\nDeclines the challenge.\n\nYou can\'t challenge someone that\'s already challenged. You can\'t challenge someone while you\'re already challenged. You can\'t chllenge a bot. You can\'t "challenge yourself, dumbass."\n\n*Single-Player Battleship:*\n**{prefix}battleship / {prefix}bs**\nStarts a new Battleship Game and abandons the previous one.\n**{prefix}shoot / {prefix}shootbs / {prefix}bsshoot <x_position> <y_position>**\nShoots at the specified position.\n\nThe board is 6x6 units. There are 4 1x1 ships. You have 20 chances to get all ships. The X and Y input of `{prefix}shoot` should be numbers that are more than 0 and less than or equal to 6.\n\n*Minesweeper:*\n**{prefix}minesweeper <dimension_size (default: 10)> <num_bombs (default: 10)>**\nStarts a new Minesweeper game and abandons any previous games.\n**{prefix}d <x> <y>**\nDigs at that position.\n**{prefix}f <x> <y>**\nToggles a flag at that position.\n**{prefix}end**\nEnds the game.\n\nThe minimum dimension size is 5, and the maximun is 12 due to Discord limitations. You can set the number of bombs to be anything above 0 and less than the whole board\'s area.',
+        title = '***PAGE 6: Games 1:***',
+        description = f'*Tic Tac Toe:*\n**{prefix}tictactoe / {prefix}ttt <user_ping>**\nChallenges the mentioned user to a Tic Tac Toe game.\n**{prefix}accepttictactoe / {prefix}acceptttt\n**Accepts the challenge and starts a Tic Tac Toe Game.\n**{prefix}canceltictactoe / {prefix}cancelttt**\nDeclines the challenge.\n\nYou can\'t challenge someone that\'s already challenged. You can\'t challenge someone while you\'re already challenged. You can\'t chllenge a bot. You can\'t "challenge yourself, dumbass."\n\n*Single-Player Battleship:*\n**{prefix}battleship / {prefix}bs**\nStarts a new Battleship Game and abandons the previous one.\n**{prefix}shoot / {prefix}shootbs / {prefix}bsshoot <x_position> <y_position>**\nShoots at the specified position.\n\nThe board is 6x6 units. There are 4 1x1 ships. You have 20 chances to get all ships. The X and Y input of `{prefix}shoot` should be numbers that are more than 0 and less than or equal to 6.',
         color = discord.Color.blue()
     )
-    embeds = [embed1, embed2, embed3, embed4, embed5, embed6]
+    embed7 = discord.Embed(
+        title = '***PAGE 7: Games 2***',
+        description = f'*Minesweeper:*\n**{prefix}minesweeper <dimension_size (default: 10)> <num_bombs (default: 10)>**\nStarts a new Minesweeper game and abandons any previous games.\n**{prefix}d <x> <y>**\nDigs at that position.\n**{prefix}f <x> <y>**\nToggles a flag at that position.\n**{prefix}end**\nEnds the game.\n\nThe minimum dimension size is 5, and the maximun is 12 due to Discord limitations. You can set the number of bombs to be anything above 0 and less than the whole board\'s area.\n\n*Hangman:*\n**{prefix}hangman**\nStarts a new Hangman game.\n\nTo play, start a game and guess a letter or word by sending one. That\'s it!'
+    )
+    embeds = [embed1, embed2, embed3, embed4, embed5, embed6, embed7]
     return embeds[page]
 
 def nick_embed(msg, user, nickname):
@@ -2594,7 +3012,6 @@ def level_embed(message, member):
             print(xp)
             print('getting level')
             level_id = split[1]
-            print(level_name)
             print('getting role')
             try:
                 role = discord.utils.get(message.guild.roles, id = int(level_id))
@@ -2671,6 +3088,18 @@ def level_embed(message, member):
     embed.set_thumbnail(url = member.avatar_url)
     timeSent = datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
     embed.set_footer(text='Quartermaster Spaghetti · ' + timeSent)
+    return embed
+
+def hangman_embed(msg, author, desc):
+    embed = discord.Embed(
+        title = 'Let\'s play Hangman!',
+        description = desc,
+        color = discord.Color.blurple()
+    )
+    timeSent = datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
+    embed.set_footer(text='Quartermaster Spaghetti · ' + timeSent)
+    embed.set_author(name=author.name, icon_url=author.avatar_url)
+
     return embed
     
 def mute_embed(message, member, reason, time_to_unmute, author):
