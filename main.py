@@ -53,9 +53,13 @@ def intTryParse(value):
     except ValueError:
         return value, False
 
-def is_admin(msg):
+async def is_admin(msg):
     is_admin = False
-    admin = discord.utils.get(msg.guild.roles, name = database_functions.get_admin(msg.guild.id))
+    try:
+        admin = discord.utils.get(msg.guild.roles, id = int(database_functions.get_admin(msg.guild.id)))
+    except:
+        await msg.send('The muted role that was assigned in the setup was deleted, please change it by going through the setup again.')
+        return False
     for x in msg.author.roles:
         if x.position == admin.position:
             is_admin = True
@@ -80,10 +84,12 @@ def is_in_setup(guild_id):
 # Events
 @client.event
 async def on_message_delete(message):
-    if message.author.bot: return
+    if message.author == client.user: return
 
-    await discord.utils.get(message.guild.channels, name = database_functions.get_logs(message.guild.id)).send(embed=log_embed(message, True))
-
+    try:
+        await discord.utils.get(message.guild.channels, id = int(database_functions.get_logs(message.guild.id))).send(embed=log_embed(message, True))
+    except:
+        return
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -174,80 +180,38 @@ async def on_reaction_add(reaction, user):
         return
     if user.id == client.user.id: return
     print(f'reaction id is {reaction.emoji}')
-    golden_emoji = ''
     for x in reaction.message.reactions:
         if x.emoji == discord.utils.get(discord.utils.get(client.guilds, name = 'Quartermaster Spaghetti\'s emotes').emojis, name = 'QuartermasterSpaghetti'):
+
             print('reaction is from help message')
             if reaction.emoji == '1️⃣':
                 print('reaction is 1')
                 await reaction.message.edit(embed = help_embed(0))
-                await reaction.message.clear_reactions()
-                await reaction.message.add_reaction('<:QuartermasterSpaghetti:804358582819880973>')
-                await reaction.message.add_reaction('1️⃣')
-                await reaction.message.add_reaction('2️⃣')
-                await reaction.message.add_reaction('3️⃣')
-                await reaction.message.add_reaction('4️⃣')
-                await reaction.message.add_reaction('5️⃣')
-                await reaction.message.add_reaction('6️⃣')
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 
             elif reaction.emoji == '2️⃣':
                 print('reaction is 2')
                 await reaction.message.edit(embed = help_embed(1))
-                await reaction.message.clear_reactions()
-                await reaction.message.add_reaction ('<:QuartermasterSpaghetti:804358582819880973>')
-                await reaction.message.add_reaction('1️⃣')
-                await reaction.message.add_reaction('2️⃣')
-                await reaction.message.add_reaction('3️⃣')
-                await reaction.message.add_reaction('4️⃣')
-                await reaction.message.add_reaction('5️⃣')
-                await reaction.message.add_reaction('6️⃣')
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 
             elif reaction.emoji == '3️⃣':
                 print('reaction is 3')
                 await reaction.message.edit(embed = help_embed(2))
-                await reaction.message.clear_reactions()
-                await reaction.message.add_reaction ('<:QuartermasterSpaghetti:804358582819880973>')
-                await reaction.message.add_reaction('1️⃣')
-                await reaction.message.add_reaction('2️⃣')
-                await reaction.message.add_reaction('3️⃣')
-                await reaction.message.add_reaction('4️⃣')
-                await reaction.message.add_reaction('5️⃣')
-                await reaction.message.add_reaction('6️⃣')
+                await reaction.message.remove_reaction(reaction.emoji, user)
             elif reaction.emoji == '4️⃣':
                 print('reaction is 4')
                 await reaction.message.edit(embed = help_embed(3))
-                await reaction.message.clear_reactions()
-                await reaction.message.add_reaction('<:QuartermasterSpaghetti:804358582819880973>')
-                await reaction.message.add_reaction('1️⃣')
-                await reaction.message.add_reaction('2️⃣')
-                await reaction.message.add_reaction('3️⃣')
-                await reaction.message.add_reaction('4️⃣')
-                await reaction.message.add_reaction('5️⃣')
-                await reaction.message.add_reaction('6️⃣')
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 
             elif reaction.emoji == '5️⃣':
                 print('reaction is 5')
                 await reaction.message.edit(embed = help_embed(4))
-                await reaction.message.clear_reactions()
-                await reaction.message.add_reaction('<:QuartermasterSpaghetti:804358582819880973>')
-                await reaction.message.add_reaction('1️⃣')
-                await reaction.message.add_reaction('2️⃣')
-                await reaction.message.add_reaction('3️⃣')
-                await reaction.message.add_reaction('4️⃣')
-                await reaction.message.add_reaction('5️⃣')
-                await reaction.message.add_reaction('6️⃣')
+                await reaction.message.remove_reaction(reaction.emoji, user)
             
             elif reaction.emoji == '6️⃣':
                 print('reaction is 6')
                 await reaction.message.edit(embed = help_embed(5))
-                await reaction.message.clear_reactions()
-                await reaction.message.add_reaction('<:QuartermasterSpaghetti:804358582819880973>')
-                await reaction.message.add_reaction('1️⃣')
-                await reaction.message.add_reaction('2️⃣')
-                await reaction.message.add_reaction('3️⃣')
-                await reaction.message.add_reaction('4️⃣')
-                await reaction.message.add_reaction('5️⃣')
-                await reaction.message.add_reaction('6️⃣')
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 
         elif x.emoji == discord.utils.get(discord.utils.get(client.guilds, name = 'Quartermaster Spaghetti\'s emotes').emojis, name = 'tictactoe'):
             msg = reaction.message
@@ -263,6 +227,7 @@ async def on_reaction_add(reaction, user):
                 return
             new_message = f'<@!{current_turn.id}> <@!{new_turn.id}>\n'
             if reaction.emoji == '1️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -310,6 +275,7 @@ async def on_reaction_add(reaction, user):
                         elif x == 8:
                             new_message += split[10] + ' '
             elif reaction.emoji == '2️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -357,6 +323,7 @@ async def on_reaction_add(reaction, user):
                         elif x == 8:
                             new_message += split[10] + ' '
             elif reaction.emoji == '3️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -404,6 +371,7 @@ async def on_reaction_add(reaction, user):
                         elif x == 8:
                             new_message += split[10] + ' '
             elif reaction.emoji == '4️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -451,6 +419,7 @@ async def on_reaction_add(reaction, user):
                         elif x == 8:
                             new_message += split[10] + ' '
             elif reaction.emoji == '5️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -498,6 +467,7 @@ async def on_reaction_add(reaction, user):
                         elif x == 8:
                             new_message += split[10] + ' '
             elif reaction.emoji == '6️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -545,6 +515,7 @@ async def on_reaction_add(reaction, user):
                         elif x == 8:
                             new_message += split[10] + ' '
             elif reaction.emoji == '7️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -592,6 +563,7 @@ async def on_reaction_add(reaction, user):
                         elif x == 8:
                             new_message += split[10] + ' '
             elif reaction.emoji == '8️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -639,6 +611,7 @@ async def on_reaction_add(reaction, user):
                         elif x == 8:
                             new_message += split[10] + ' '
             elif reaction.emoji == '9️⃣':
+                await reaction.message.remove_reaction(reaction.emoji, user)
                 if message.count(':regional_indicator_x:') <= message.count(':regional_indicator_o:'):
                     for x in range(9):
                         if x == 0:
@@ -969,7 +942,6 @@ async def on_message(msg):
                 id = str(msg.guild.id)
                 if not id in client.setup_guilds:
                     client.setup_guilds.append(id)
-                setup_guilds.close()
                 await msg.channel.send('Cleared settings. Please enter the new settings.')
                 return
             elif words[0] == f'{prefix}setadmin':
@@ -977,7 +949,7 @@ async def on_message(msg):
                     await msg.channel.send('Invalid role.')
                     return
                 role = msg.role_mentions[0]
-                database_functions.set_admin(msg.guild.id, ascii(role.name)[1:-1] if not ascii(role.name)[1:-1] == role.name else role.name)
+                database_functions.set_admin(msg.guild.id, role.id)
                 await msg.channel.send(f'Set the admin role to {role.mention}')
                 return
             elif words[0] == f'{prefix}setmuted':
@@ -988,7 +960,7 @@ async def on_message(msg):
                     await msg.channel.send('Invalid role.')
                     return
                 role = msg.role_mentions[0]
-                database_functions.set_muted(msg.guild.id, ascii(role.name)[1:-1] if not ascii(role.name)[1:-1] == role.name else role.name)
+                database_functions.set_muted(msg.guild.id, role.id)
                 await msg.channel.send(f'Set the muted role to {role.mention}')
                 return
             elif words[0] == f'{prefix}setlogs':
@@ -1002,7 +974,7 @@ async def on_message(msg):
                 if channel == None:
                     await msg.channel.send('Invalid channel.')
                     return
-                database_functions.set_logs(msg.guild.id, ascii(channel.name)[1:-1] if not ascii(channel.name)[1:-1] == channel.name else channel.name)
+                database_functions.set_logs(msg.guild.id, channel.id)
                 try:
                     client.setup_guilds.remove(str(msg.guild.id))
                 except:
@@ -1031,7 +1003,7 @@ async def on_message(msg):
                 if not intTryParse(level_num) or not intTryParse(xp):
                     await msg.channel.send(f'Please follow the correct format: `{prefix}setlevel <level_num> <xp_to_get> <role_name>')
                     return
-                database_functions.set_level(msg.guild.id, int(level_num), ascii(f'{xp} {role.name}')[1:-1] if ascii(f'{xp} {role.name}')[1:-1] == f'{xp} {role.name}' else f'{xp} {role.name}')
+                database_functions.set_level(msg.guild.id, int(level_num), f'{xp} {role.id}')
                 await msg.channel.send(f'Set level {level_num} to {role.mention}')
                 return
         return
@@ -1045,17 +1017,19 @@ async def on_message(msg):
         author = await msg.guild.fetch_member(msg.author.id)
         print(author is None)
         for x in levels:
-            xp_required = x.split()[0]
-            level_name = x[len(xp_required)+1:]
+            split = x.split()
+            xp_required = split[0]
+            level_id = split[1]
             print(xp_required)
-            print(level_name)
-            role = discord.utils.get(msg.guild.roles, name = level_name)
-            print(role is None)
+            try:
+                role = discord.utils.get(msg.guild.roles, id = int(level_id))
+            except:
+                continue
             if role == None:
                 continue
             elif int(database_functions.get_xp(msg.guild.id, msg.author.id)) >= int(xp_required):
                 print(f'{x} is the highest level that {msg.author.name} can get')
-                await msg.author.add_roles(discord.utils.get(msg.guild.roles, name = level_name))
+                await msg.author.add_roles(role)
             else:
                 print('too high')
                 try:
@@ -1788,8 +1762,16 @@ async def mute(ctx, member: discord.Member, time_to_unmute_str: str, *, reason: 
         await ctx.send('You can\'t do that, you\'re not allowed to!')
         return
     
-    role = discord.utils.get(ctx.guild.roles, name = database_functions.get_muted(ctx.guild.id))
-    await member.add_roles(role)
+    try:
+        role = discord.utils.get(ctx.guild.roles, id = int(database_functions.get_muted(ctx.guild.id)))
+    except:
+        await ctx.send('The muted role that was assigned in the setup was deleted, please change it by going through the setup again.')
+        return
+    try:
+        await member.add_roles(role)
+    except:
+        await ctx.send('The muted role that was assigned in the setup was deleted, please change it by going through the setup again.')
+        return
     time_to_unmute = 1
     if time_to_unmute_str[-1] == 's' and time_to_unmute_str[:-1].isdigit():
         time_to_unmute = int(time_to_unmute_str[:-1])
@@ -1815,14 +1797,24 @@ async def mute(ctx, member: discord.Member, time_to_unmute_str: str, *, reason: 
         await dm.send(f'You have been muted in {ctx.guild.name} for: {reason}')
     except:
         print(f'cant dm {ctx.author.name}')
-    await discord.utils.get(ctx.guild.channels, name = database_functions.get_logs(ctx.guild.id)).send(embed=embed)
+    try:
+        await discord.utils.get(ctx.guild.channels, id = int(database_functions.get_logs(ctx.guild.id))).send(embed=embed)
+    except:
+        pass
     await ctx.send(embed=embed)
     if client.update_released:
         if random.randint(1, 100) >= 75:
             await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
     await asyncio.sleep(time_to_unmute)
-    await member.remove_roles(role)
-    await discord.utils.get(ctx.guild.channels, name = database_functions.get_logs(ctx.guild.id)).send(embed=mute_end_embed(member, ctx.channel, ctx.author, time_to_unmute_str))
+    try:
+        await member.remove_roles(role)
+    except:
+        await ctx.send('The muted role that was assigned in the setup was deleted, please change it by going through the setup again.')
+        return
+    try:
+        await discord.utils.get(ctx.guild.channels, id = int(database_functions.get_logs(ctx.guild.id))).send(embed=mute_end_embed(member, ctx.channel, ctx.author, time_to_unmute_str))
+    except:
+        pass
 
 @client.command()
 @commands.check(is_admin)
@@ -1835,8 +1827,14 @@ async def unmute(ctx, member: discord.Member):
     if member.top_role.position >= author.top_role.position:
         await ctx.send('You can\'t do that, you\'re not allowed to!')
         return
-    role = discord.utils.get(ctx.guild.roles, name = database_functions.get_muted(ctx.guild.id))
-    await member.remove_roles(role)
+    try:
+        role = discord.utils.get(ctx.guild.roles, id = int(database_functions.get_muted(ctx.guild.id)))
+    except:
+        await ctx.send('The muted role that was assigned in the setup was deleted, please change it by going through the setup again.')
+    try: 
+        await member.remove_roles(role)
+    except:
+        await ctx.send('The muted role that was assigned in the setup was deleted, please change it by going through the setup again.')
     try:
         dm = await member.create_dm()
         await dm.send(f'You have been unmuted from {ctx.guild.name}!')
@@ -2151,7 +2149,10 @@ async def kick(ctx, member: discord.Member, *, reason = 'None'):
         await ctx.send('You can\'t do that, you\'re not allowed to!')
         return
     embed = kick_embed(ctx, member, reason, ctx.author)
-    await discord.utils.get(ctx.guild.channels, name = database_functions.get_logs(ctx.guild.id)).send(embed=embed)
+    try:
+        await discord.utils.get(ctx.guild.channels, name = database_functions.get_logs(ctx.guild.id)).send(embed=embed)
+    except:
+        pass
     await ctx.send(embed=embed)
     await ctx.guild.kick(member)
     try:
@@ -2172,7 +2173,10 @@ async def ban(ctx, member: discord.Member, *, reason = 'None'):
         await ctx.send('You can\'t do that, you\'re not allowed to!')
         return
     embed = ban_embed(ctx, member, reason, ctx.author)
-    await discord.utils.get(ctx.guild.channels, name = database_functions.get_logs(ctx.guild.id)).send(embed=embed)
+    try:
+        await discord.utils.get(ctx.guild.channels, name = database_functions.get_logs(ctx.guild.id)).send(embed=embed)
+    except:
+        pass
     await ctx.send(embed=embed)
     await ctx.guild.ban(member)
     try:
@@ -2190,6 +2194,8 @@ async def ban(ctx, member: discord.Member, *, reason = 'None'):
 async def lockdown(ctx, *, reason = 'None'):
     role = ctx.guild.default_role
     admin = discord.utils.get(ctx.guild.roles, name = database_functions.get_admin(ctx.guild.id))
+    if admin == None:
+        await ctx.send('The admin role that was assigned in the setup got deleted, please change it by going through the setup.')
     for x in ctx.guild.roles:
         if x.position < admin.position:
             role = x
@@ -2207,6 +2213,8 @@ async def lockdown(ctx, *, reason = 'None'):
 async def unlock(ctx):
     role = ctx.guild.default_role
     admin = discord.utils.get(ctx.guild.roles, name = database_functions.get_admin(ctx.guild.id))
+    if admin == None:
+        await ctx.send('The admin role that was assigned in the setup got deleted, please change it by going through the setup.')
     for x in ctx.guild.roles:
         if x.position < admin.position:
             role = x
@@ -2284,24 +2292,6 @@ def setup_embed():
     embed.set_footer(text = 'Quartermaster Spaghetti')
     return embed
 
-def test_embed():
-    embed = discord.Embed(
-        title='Title',
-        description='This is a description.',
-        colour=discord.Color.random())
-    embed.set_footer(text='This is a footer')
-    embed.set_image(url='https://cdn.discordapp.com/attachments/800027037732569098/800731374893006859/Z.png')
-    embed.set_thumbnail(url='https://cdn.discordapp.com/attachments/800027037732569098/800731374893006859/Z.png')
-    embed.set_author(
-        name='Author Name',
-        icon_url='https://cdn.discordapp.com/attachments/800027037732569098/800731374893006859/Z.png'
-    )
-    embed.add_field(name='Field Name', value='Field Value', inline=False)
-    embed.add_field(name='Field Name', value='Field Value', inline=True)
-    embed.add_field(name='Field Name', value='Field Value', inline=True)
-
-    return embed
-
 def log_embed(message, delete):
     said_str = ' said: '
     deleted_str = '\'s message was deleted: '
@@ -2327,7 +2317,7 @@ def log_embed(message, delete):
 def help_embed(page):
     embed1 = discord.Embed(
         title = '***PAGE 1: Thank you so much for choosing me!***',
-        description = 'Quartermaster Spaghetti is growing, if not by a teeny tiny amount. It would be a lot of help if you contacted my brother Captain Ravioli for suggestions or problems, preferrably in the support server, or alternatively  with the contact support email (quartermasterspaghetti.contact@gmail.com), and if I don\'t reply in 2 days, you can DM him. Thank you again!\n\n*You can switch pages with the reactions!*',
+        description = 'Quartermaster Spaghetti is growing, if not by a teeny tiny amount. It would be a lot of help if you contacted my brother Captain Ravioli for suggestions or problems, preferrably in the support server, or alternatively  with the contact support email (quartermasterspaghetti.contact@gmail.com), and if I don\'t reply in 2 days, you can DM him. Thank you again!\n\nPlease create a channel called `bot-setup` and run the command `{prefix}setup` there.\n*You can switch pages with the reactions!*',
         color = discord.Color.from_rgb(255, 255, 0)
     )
     embed1.add_field(
@@ -2572,8 +2562,11 @@ def serverinfo_embed(guild):
     else:
         level_msg = ''
         for x in levels:
-            name = x[len(x.split()[0]) + 1:]
-            role = discord.utils.get(guild.roles, name = name)
+            id = x.split()[1]
+            try:
+                role = discord.utils.get(guild.roles, id = int(id))
+            except:
+                pass
             level_msg += f'{role.mention}, '
         level_msg = level_msg[:-2]
         embed.add_field(
@@ -2594,24 +2587,34 @@ def level_embed(message, member):
     if not levels == 'None':
         for x in range(len(levels)):
             print('getting xp')
-            xp_str = levels[x].split()[0]
+            split = levels[x].split()
+            xp_str = split[0]
             print(xp_str)
             xp = int(xp_str)
             print(xp)
             print('getting level')
-            level_name = levels[x][len(str(xp)) + 1:]
+            level_id = split[1]
             print(level_name)
             print('getting role')
-            role = discord.utils.get(message.guild.roles, name = level_name)
+            try:
+                role = discord.utils.get(message.guild.roles, id = int(level_id))
+            except:
+                continue
             print(role)
+            if role == None:
+                continue
             if role in member.roles:
                 print('setting top level')
                 top_level = [role, xp]
                 print(top_level)
                 try:
-                    xp = int(levels[x+1].split()[0])
-                    level_name = levels[x+1][len(str(xp)) + 1:]
-                    role = discord.utils.get(message.guild.roles, name = level_name)
+                    split = levels[x+1].split()
+                    xp = int(split[0])
+                    level_id = split[1]
+                    try:
+                        role = discord.utils.get(message.guild.roles, id = int(level_id))
+                    except:
+                        continue
                     next_level = [role, xp]
                 except:
                     next_level = top_level

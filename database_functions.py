@@ -99,23 +99,35 @@ def get_warnings_num(guild_id, user_id):
             return value
 
 
-def set_admin(guild_id, role_name):
-    db.add(f'admin {guild_id}', role_name[1:-1])
+def set_admin(guild_id, role_id):
+    if db.isfound(f'admin {guild_id}'):
+        db.change(f'admin {guild_id}', f'{role_id}')
+    else:
+        db.add(f'admin {guild_id}', f'{role_id}')
     db.save()
 
 
-def set_muted(guild_id, role_name):
-    db.add(f'muted {guild_id}', role_name[1:-1])
+def set_muted(guild_id, role_id):
+    if db.isfound(f'muted {guild_id}'):
+        db.change(f'muted {guild_id}', f'{role_id}')
+    else:
+        db.add(f'muted {guild_id}', f'{role_id}')
     db.save()
 
 
-def set_logs(guild_id, channel_name):
-    db.add(f'logs {guild_id}', channel_name[1:-1])
+def set_logs(guild_id, channel_id):
+    if db.isfound(f'logs {guild_id}'):
+        db.change(f'logs {guild_id}', f'{channel_id}')
+    else:
+        db.add(f'logs {guild_id}', f'{channel_id}')
     db.save()
 
 
-def set_level(guild_id, index, role_name):
-    db.add(f'level {index} {guild_id}', role_name[1:-1])
+def set_level(guild_id, index, role_id):
+    if db.isfound(f'level {index} {guild_id}'):
+        db.change(f'level {index} {guild_id}', f'{role_id}')
+    else:
+        db.add(f'level {index} {guild_id}', f'{role_id}')
     db.save()
 
 
@@ -135,13 +147,19 @@ def get_setup(guild_id):
     return setup
 
 def get_admin(guild_id):
-    return db.get(f'admin {guild_id}')
+    if db.isfound(f'admin {guild_id}'):
+        return db.get(f'admin {guild_id}')
+    return 'None'
 
 def get_muted(guild_id):
-    return db.get(f'muted {guild_id}')
+    if db.isfound(f'muted {guild_id}'):
+        return db.get(f'muted {guild_id}')
+    return 'None'
 
 def get_logs(guild_id):
-    return db.get(f'logs {guild_id}')
+    if db.isfound(f'logs {guild_id}'):
+        return db.get(f'logs {guild_id}')
+    return 'None'
 
 def get_level(guild_id, index):
     if db.isfound(f'level {index} {guild_id}'):
