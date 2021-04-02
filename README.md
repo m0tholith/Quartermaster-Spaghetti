@@ -33,6 +33,9 @@ Quartermaster Spaghetti is ~~my brother~~ a bot created by me. It has a variety 
 * `.showwarns / .warns / .warnings / .showwarnings <(optional) user_ping>`: Shows the warnings of either the sender or the mentioned user.
 * `.leaderboard`: Shows the leaderboard of the server in which the command was sent.
 * `.level`: Shows the sender's level information.
+* `.covid <country_name>`: Sends some COVID-19 information about the country. By default, the global information is chosen.
+* `.covidcountrylist`: Shows a list of supported country names.
+* `.ascii <(optional) user_ping>`: Converts the sender's logo to an ASCII text file.
 * `.updates`: Sends the latest update that Captain Ravioli sent.
 
 ### Admin Commands 1:
