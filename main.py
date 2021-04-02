@@ -3403,4 +3403,4 @@ def unlock_embed(author):
 
     return embed
 
-client.run('ODAwNjIwMjc0NjA5MTYwMTky.YAUxvA.eg18QuYGzjsI_UbvojT6fZXNYYc')#os.environ['TOKEN'])
+client.run(os.environ['TOKEN'])
