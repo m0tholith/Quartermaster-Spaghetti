@@ -12,8 +12,6 @@ Quartermaster Spaghetti is ~~my brother~~ a bot created by me. It has a variety 
     * This is one that's pretty straight-forward. You can add a warning to someone, remove it, clear their warnings, and check their warnings. That's it.
   * *The Updates System:*
     * The updates system is only usable by me, what it does is just enable me to notify people for 5 minutes about an update. Look for the command `newupdate` with the Search in your IDE or Notepad or whatever, to find the set ID and change it if you want.
-  * *Reaction roles:*
-    * Reaction roles are reactions that give you a role set by the admins of the server. Once you react with it, you get it. Once you unreact with it, it's gone. You obviously can't put an emote that the bot can't reach (emotes out of the server), but you can put custom emotes in the server along with default emotes. There's a bug that doesn't allow for animated emotes though, so don't use that.
   * *Interacting with Elements:*
     * You can make the bot send messages, DM's, edit messages, reply to messages, edit replies, react to a message, unreact to a message, and make it send an embed. One of my friends' server admins love this feature so I think it's a good one.
   * *Poll System:*
