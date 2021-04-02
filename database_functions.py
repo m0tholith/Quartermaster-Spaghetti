@@ -190,66 +190,6 @@ def clear_setup(guild_id):
             db.delete(f'level {x} {guild_id}')
     db.save()
 
-def activate_reaction_roles(IDs):
-    for id in IDs:
-        key = f'reaction roles {id}'
-        if db.isfound(key):
-            rr = db.get(key)
-            db.delete(key)
-            db.add(rr)
-
-def add_reaction_role(guild_id, message_id, role_id, emoji):
-    key = f'reaction roles {guild_id}'
-    if db.isfound(key):
-        reaction_roles = db.get(f'reaction roles {guild_id}')
-        reaction_roles += f"""{message_id} {role_id} {ascii(emoji)}
-        """
-        try:
-            db.change(key, reaction_roles)
-        except:
-            db.add(f'reaction roles {guild_id}', f"""{message_id} {role_id} {ascii(emoji)}
-            """)
-    else:
-        db.add(f'reaction roles {guild_id}', f"""{message_id} {role_id} {ascii(emoji)}
-        """)
-    db.save()
-
-def remove_reaction_role(guild_id, role_id):
-    try:
-        splitlines = db.get(f'reaction roles {guild_id}').splitlines()
-    except:
-        return
-    print('ready to remove')
-    for x in splitlines:
-        if str(role_id) in x.split():
-            print('removing')
-            splitlines.remove(x)
-    new_value = """"""
-    for x in splitlines:
-        new_value += f"""{x}
-        """
-    if new_value == """
-    """:
-        db.delete(f'reaction roles {guild_id}')
-    else:
-        try:
-            db.change(f'reaction roles {guild_id}', new_value)
-        except:
-            db.delete(f'reaction roles {guild_id}')
-    db.save()
-
-def get_reaction_roles(guild_id):
-    if db.isfound(f'reaction roles {guild_id}'):
-        return db.get(f'reaction roles {guild_id}')
-    return ''
-
-def clear_reaction_roles(guild_id):
-    try:
-        db.delete(f'reaction roles {guild_id}')
-    except:
-        return
-    db.save()
-
 def intTryParse(value):
     try:
         return int(value), True

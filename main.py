@@ -1,4 +1,6 @@
-﻿import discord, asyncio, random, datetime, database_functions, os, requests
+﻿import discord, asyncio, random, datetime, database_functions, os, requests, pygifsicle
+from typing import Union
+from PIL import Image, ImageFilter
 from discord.ext import tasks, commands
 
 # Bot Setup 
@@ -17,20 +19,6 @@ client.setup_guilds = []
 
 # Minesweeper Dictionary
 client.minesweeper = {}
-
-# XP File Reset
-for file in os.listdir():
-    if file.startswith('xp ') or file == 'ttt.txt':
-        print('clearing ' + file)
-        open_file = open(file, 'w')
-        open_file.write('')
-        open_file.close()
-
-# Activate Reaction Roles
-IDs = []
-for x in client.guilds:
-    IDs.append(x.id)
-database_functions.activate_reaction_roles(IDs)
 
 # Tasks
 @tasks.loop(seconds = 30)
@@ -927,7 +915,7 @@ async def on_message(msg):
     if msg.author == client.user:
         return
     await client.process_commands(msg)
-    if isinstance(msg, discord.DMChannel):
+    if isinstance(msg.channel, discord.DMChannel):
         return
     message = msg.content
     if msg.channel.name == 'bot-setup':
@@ -1047,33 +1035,6 @@ async def on_message(msg):
                 await dm.send(f'`{msg.author}` **says:** {message}')
             except:
                 print(f'cant dm {member.name}')
-    
-#    print(msg.author.id)
-#    xp_file = open(f'xp {msg.guild.id}.txt', 'a')
-#    xp_file.close()
-#    xp_file = open(f'xp {msg.guild.id}.txt', 'r')
-#    read = xp_file.read()
-#    xp_file.close()
-#    if not str(msg.author.id) in read.splitlines():
-#        print(database_functions.get_xp(msg.guild.id, msg.author.id))
-#        database_functions.add_xp(msg.guild.id, msg.author.id, 1)
-#        print(database_functions.get_xp(msg.guild.id, msg.author.id))
-#        print(f'given {msg.author.name} 1 XP')
-#        read += f'{msg.author.id}\n'
-#        xp_file = open(f'xp {msg.guild.id}.txt', 'w')
-#        xp_file.write(read)
-#        xp_file.close()
-#        await asyncio.sleep(5)
-#        lines = read.splitlines()
-#        new_read = ''
-#        for x in lines:
-#            if not x == str(msg.author.id):
-#                new_read += f'{x}\n'
-#        xp_file = open(f'xp {msg.guild.id}.txt', 'w')
-#        xp_file.write(new_read)
-#        xp_file.close()
-#    else:
-#        print(f'{msg.author} cannot get xp now')
     member_id = msg.author.id
     guild_id = msg.guild.id
     try:
@@ -1102,52 +1063,9 @@ async def on_message(msg):
                 if y.name == 'discord-phone' and not y is msg.channel:
                     await y.send(f'`{msg.author}` **says:** {message}')
 
-@client.event
-async def on_raw_reaction_add(payload):
-    print('raw reaction add')
-    reaction_roles = database_functions.get_reaction_roles(payload.guild_id)
-    if reaction_roles == '':
-        print('nothing')
-        return
-    print(payload.message_id)
-    for x in reaction_roles.splitlines():
-        if str(payload.message_id) in x.split():
-            channel_id = payload.channel_id
-            rr = reaction_roles
-            split = rr.split()
-            print(str(payload.emoji))
-            if ascii(str(payload.emoji)) in split or f'<a{ascii(str(payload.emoji))[1:]}' in split:
-                index = split.index(ascii(str(payload.emoji)))
-                role_id = split[index - 1]
-                channel = await client.fetch_channel(channel_id)
-                member = await channel.guild.fetch_member(payload.user_id)
-                role = channel.guild.get_role(int(role_id))
-                print(f'giving role {role.name}')
-                await member.add_roles(role)
-
-@client.event
-async def on_raw_reaction_remove(payload):
-    reaction_roles = database_functions.get_reaction_roles(payload.guild_id)
-    if reaction_roles == '':
-        print('nothing')
-        return
-    for x in reaction_roles.splitlines():
-        if str(payload.message_id) in x.split():
-            channel_id = payload.channel_id
-            rr = reaction_roles
-            split = rr.split()
-            print(str(payload.emoji))
-            if ascii(str(payload.emoji)) in split or f'<a{ascii(str(payload.emoji))[1:]}' in split:
-                index = split.index(ascii(str(payload.emoji)))
-                role_id = split[index - 1]
-                channel = await client.fetch_channel(channel_id)
-                member = await channel.guild.fetch_member(payload.user_id)
-                role = channel.guild.get_role(int(role_id))
-                print(f'removing role {role.name}')
-                await member.remove_roles(role)
-
 # Global Commands
 @client.command(aliases = ['help'])
+
 async def about(ctx):
     bot_msg = await ctx.send(embed=help_embed(0))
     await bot_msg.add_reaction('<:QuartermasterSpaghetti:804358582819880973>')
@@ -1158,11 +1076,9 @@ async def about(ctx):
     await bot_msg.add_reaction('5️⃣')
     await bot_msg.add_reaction('6️⃣')
     await bot_msg.add_reaction('7️⃣')
-    if client.update_released:
-        if random.randint(1, 100) >= 75:
-            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
     
 @client.command()
+
 async def ping(ctx):
     pongs = ['Pong!', '*misses*']
     await ctx.send(f'{random.choice(pongs)} Ping to Dicord\'s API is `{round(client.latency * 1000)}ms`.')
@@ -1171,6 +1087,7 @@ async def ping(ctx):
             await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
     
 @client.command()
+
 async def pong(ctx):
     pongs = ['Ping!', '*misses*']
     await ctx.send(f'{random.choice(pongs)} Pong to Dicord\'s API is `{round(client.latency * 1000)}ms`.')
@@ -1180,6 +1097,7 @@ async def pong(ctx):
 
 @client.command()
 @commands.check(is_text_channel)
+
 async def avatar(ctx, member: discord.Member = None):
     if member == None:
         member = ctx.author
@@ -1190,6 +1108,7 @@ async def avatar(ctx, member: discord.Member = None):
 
 @client.command(aliases = ['ui'])
 @commands.check(is_text_channel)
+
 async def userinfo(ctx, member: discord.Member = None):
     if member == None:
         member = ctx.author
@@ -1201,6 +1120,7 @@ async def userinfo(ctx, member: discord.Member = None):
 
 @client.command(aliases = ['lvl'])
 @commands.check(is_text_channel)
+
 async def level(ctx):
     await ctx.send(embed = level_embed(ctx.message, ctx.author))
     if client.update_released:
@@ -1209,6 +1129,7 @@ async def level(ctx):
 
 @client.command(aliases = ['si'])
 @commands.check(is_text_channel)
+
 async def serverinfo(ctx):
     await ctx.send(embed = serverinfo_embed(ctx.guild))
     if client.update_released:
@@ -1217,6 +1138,7 @@ async def serverinfo(ctx):
 
 @client.command(aliases = ['warns', 'warnings', 'showwarnings'])
 @commands.check(is_text_channel)
+
 async def showwarns(ctx, member: discord.Member = None):
     if member == None:
         member = ctx.author
@@ -1230,6 +1152,7 @@ async def showwarns(ctx, member: discord.Member = None):
 
 @client.command()
 @commands.check(is_text_channel)
+
 async def leaderboard(ctx):
     warning_msg = await ctx.send('Constructing leaderboard...')
     unsorted_leaderboard = []
@@ -1258,10 +1181,12 @@ async def leaderboard(ctx):
             await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
 
 @client.command()
+
 async def updates(ctx):
     await ctx.send(embed = client.update_embed)
 
 @client.command()
+
 async def covid(ctx, *, country_name = 'World'):
     confirmed = 0
     today_cases = 0
@@ -1307,8 +1232,12 @@ async def covid(ctx, *, country_name = 'World'):
     embed.add_field(name = 'Tests Per One Million:', value = f'{format(tests_per_mil, ",d")} tests', inline = True)
     embed.add_field(name = '‎', value = '‎', inline = True)
     await ctx.send(embed = embed)
+    if client.update_released:
+        if random.randint(1, 100) >= 75:
+            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
 
 @client.command()
+
 async def covidcountrylist(ctx):
     dm = await ctx.author.create_dm()
     await dm.send(embed = discord.Embed(title = 'List of supported countries 1:', description = """USA
@@ -1532,10 +1461,167 @@ Samoa
 Vanuatu
 Micronesia
 China""", color = discord.Color.dark_red()))
+    if client.update_released:
+        if random.randint(1, 100) >= 75:
+            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
+
+ASCII_CHARS = ["@", "#", "S", "%", "?", "*", "+", ";", ":", ",", "."]
+
+def resize_image(image, new_width = 100):
+    width, height = image.size
+    ratio = height / width
+    new_height = int(new_width * ratio)
+    resized_image = image.resize((new_width, new_height))
+    return resized_image
+
+def grayify(image):
+    grayscale = image.convert('L')
+    return grayscale
+
+def pixels_to_ascii(image):
+    pixels = image.getdata()
+    characters = ''.join([ASCII_CHARS[pixel//25] for pixel in pixels])
+    return characters
+
+@client.command()
+
+async def ascii(ctx, member: discord.Member = None):
+    try:
+        if member == None:
+            member = ctx.author
+    except:
+        return
+    new_width = 100
+    image = Image.open(requests.get(member.avatar_url, stream=True).raw)
+    new_image_data = pixels_to_ascii(grayify(resize_image(image)))
+    pixel_count = len(new_image_data)
+    ascii_image = '\n'.join(new_image_data[i:(i+new_width)] for i in range(0, pixel_count, new_width))
+    random_idx = random.randint(0, 10000)
+    filename = f'ascii_image_{random_idx}.txt'
+    with open(filename, 'w') as f:
+        f.write(ascii_image)
+    discord_file = discord.File(filename)
+    await ctx.send(embed = ascii_embed(ctx.message), file = discord_file)
+    if client.update_released:
+        if random.randint(1, 100) >= 75:
+            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
+    os.remove(filename)
+
+@client.command()
+
+async def blur(ctx, intensity = 10, member: discord.Member = None):
+    if member == None:
+        member = ctx.author
+    im = Image.open(requests.get(member.avatar_url, stream=True).raw)
+    filename = f'blur_{random.randint(0, 10000)}.png'
+    im.filter(ImageFilter.BoxBlur(intensity)).save(filename)
+    file = discord.File(filename)
+    await ctx.send(file = file)
+    os.remove(filename)
+
+@client.command()
+
+async def contour(ctx, member: discord.Member = None):
+    if member == None:
+        member = ctx.author
+    im = Image.open(requests.get(member.avatar_url, stream=True).raw)
+    filename = f'blur_{random.randint(0, 10000)}.png'
+    im.filter(ImageFilter.CONTOUR()).save(filename)
+    file = discord.File(filename)
+    await ctx.send(file = file)
+    os.remove(filename)
+
+@client.command()
+
+async def emboss(ctx, member: discord.Member = None):
+    if member == None:
+        member = ctx.author
+    im = Image.open(requests.get(member.avatar_url, stream=True).raw)
+    filename = f'blur_{random.randint(0, 10000)}.png'
+    im.filter(ImageFilter.EMBOSS()).save(filename)
+    file = discord.File(filename)
+    await ctx.send(file = file)
+    os.remove(filename)
+
+@client.command()
+
+async def gay(ctx, member: discord.Member = None):
+    if member == None:
+        member = ctx.author
+    im = Image.open(requests.get(member.avatar_url, stream=True).raw)
+    im.convert('RGBA')
+    width, height = im.size
+    filename = f'gay_{random.randint(0, 10000)}.png'
+    gay = Image.open('gay.png')
+    gay.convert('RGBA')
+    gay = gay.resize((width, height))
+    img1 = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    img1.paste(im)
+    img1.paste(gay)
+    img2 = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    img2.paste(gay)
+    img2.paste(im)
+    gay_pfp = Image.blend(img1, img2, 0.5)
+    gay_pfp.save(filename, format = 'png')
+    file = discord.File(filename)
+    await ctx.send(file = file)
+    os.remove(filename)
+
+@client.command()
+
+async def petpet(ctx, speed_var: Union[int, discord.Member] = None, member_var: Union[discord.Member, int] = None):
+    speed = None
+    member = None
+    if isinstance(speed_var, int):
+        speed = speed_var
+        member = member_var
+    else:
+        speed = member_var
+        member = speed_var
+    if member == None:
+        member = ctx.author
+    if speed == None:
+        speed = 4.6875
+    speed = max(0.1, speed)
+    speed = min(speed, 10)
+    speed /= 1.25
+    im = Image.open(requests.get(member.avatar_url, stream=True).raw)
+    im.convert('RGBA')
+    data = list(im.getdata())
+    data[0] = (0, 0, 0, 0)
+    im.putdata(data)
+    filename = f'petpet_{random.randint(0, 10000)}.gif'
+    petpet_list = [Image.open('petpet_1.png').convert('RGBA').resize((196, 196)), Image.open('petpet_2.png').convert('RGBA').resize((196, 196)), Image.open('petpet_3.png').convert('RGBA').resize((196, 196)), Image.open('petpet_4.png').convert('RGBA').resize((196, 196)), Image.open('petpet_5.png').convert('RGBA').resize((196, 196))]
+    resized_avatars = [im.resize((171, 161)), im.resize((175, 138)), im.resize((182, 126)), im.resize((179, 138)), im.resize((171, 161))]
+    frames = []
+    for x in range(5):
+        frame = Image.new('RGBA', (196, 196), (0, 0, 0, 0))
+        width, height = resized_avatars[x].size
+        x_offset = 0
+        if x == 4:
+            x_offset = 3
+        y_offset = (x % 2) * 10
+        if x == 2:
+            y_offset = 20
+        try:
+            frame.paste(resized_avatars[x], (196 - width + x_offset, 196 - height), resized_avatars[x])
+        except:
+            frame.paste(resized_avatars[x], (196 - width + x_offset, 196 - height))
+        frame.paste(petpet_list[x], (0, 0 + y_offset), petpet_list[x])
+        frames.append(frame)
+    duration = (speed * -1 + 10) * 10
+    print(duration)
+    frames[0].save(filename, save_all = True, append_images = frames[1:], optimize = False, duration = duration, loop = 0, transparency = 0, disposal = 2)
+    pygifsicle.gifsicle(filename, colors = 255)
+    pygifsicle.gifsicle(sources = filename, destination = filename, optimize = True, colors = 256, options = ['-U', '--disposal=previous', '--transparent="#000000"', '-O2'])
+    discord_file = discord.File(filename)
+    await ctx.send(file = discord_file)
+    os.remove(filename)
 
 # Game Commands
 @client.command(aliases = ['ttt'])
 @commands.check(is_text_channel)
+
 async def tictactoe(ctx, member: discord.Member):
     if member.id == ctx.author.id:
         await ctx.send('You can\'t challenge yourself, dumbass.')
@@ -1563,6 +1649,7 @@ async def tictactoe(ctx, member: discord.Member):
 
 @client.command(aliases = ['acceptttt'])
 @commands.check(is_text_channel)
+
 async def accepttictactoe(ctx):
     ttt_file = open('ttt.txt', 'r')
     read = ttt_file.read()
@@ -1601,6 +1688,7 @@ async def accepttictactoe(ctx):
 
 @client.command(aliases = ['cancelttt'])
 @commands.check(is_text_channel)
+
 async def canceltictactoe(ctx):
     ttt_file = open('ttt.txt', 'r')
     read = ttt_file.read()
@@ -1623,6 +1711,7 @@ async def canceltictactoe(ctx):
             await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
 
 @client.command(aliases = ['bs'])
+
 async def battleship(ctx):
     bs_file = open('bs.txt', 'r')
     read = bs_file.read()
@@ -1907,6 +1996,7 @@ class Board:
         return string_rep
 
 @client.command()
+
 async def minesweeper(ctx, dim_size = 10, num_bombs = 10):
     if dim_size < 5:
         await ctx.send('That\'s not enough squares for a game. Keep it above 4.')
@@ -1934,11 +2024,14 @@ async def minesweeper(ctx, dim_size = 10, num_bombs = 10):
     while len(board.dug) < board.dim_size ** 2 - num_bombs:
         await ms_msg.edit(content = str(board))
         user_input = await client.wait_for('message', check = lambda e: e.author == ctx.author and board.id == e.author.id and (e.content.startswith(f'{prefix}d') or e.content.startswith(f'{prefix}f') or e.content.startswith(f'{prefix}end') or e.content.startswith(f'{prefix}minesweeper')))
+        if client.update_released:
+            if random.randint(1, 100) >= 75:
+                await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
         content = user_input.content
-        await user_input.delete()
         if content.startswith(f'{prefix}play'):
             return
         if content.startswith(f'{prefix}d'):
+            await user_input.delete()
             try:
                 col = int(user_input.content.split()[1]) - 1
                 row = int(user_input.content.split()[2]) - 1
@@ -1955,6 +2048,7 @@ async def minesweeper(ctx, dim_size = 10, num_bombs = 10):
                     break 
             await ms_msg.edit(content = f'Call `{prefix}d` to dig and `{prefix}f` to mark or unmark a spot as a flag!\n{str(board)}')
         elif content.startswith(f'{prefix}f'):
+            await user_input.delete()
             try:
                 col = int(user_input.content.split()[1]) - 1
                 row = int(user_input.content.split()[2]) - 1
@@ -1996,6 +2090,7 @@ def get_word():
     return word
 
 @client.command()
+
 async def hangman(ctx):
     word_dict = get_word()
     word = word_dict['word'].upper()
@@ -2006,6 +2101,9 @@ async def hangman(ctx):
     guessed_words = []
     tries = 6
     message = await ctx.send(embed = hangman_embed(ctx.message, ctx.author, f'```{display_hangman(tries)}\n{word_completion}\nYour hint is: {hint}!\n\nGuessed letters: None\nGuessed words: None```'))
+    if client.update_released:
+        if random.randint(1, 100) >= 75:
+            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
     while not guessed and tries > 0:
         guess_msg = await client.wait_for('message', check = lambda e: e.author == ctx.author and e.channel == ctx.channel)
         guess = guess_msg.content.upper()
@@ -2136,6 +2234,7 @@ def display_hangman(tries):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def purge(ctx, amount: int):
     await ctx.channel.purge(limit = amount + 1)
     bot_msg = await ctx.channel.send(embed=purge_embed(ctx, amount, ctx.author))
@@ -2148,13 +2247,18 @@ async def purge(ctx, amount: int):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def slowmode(ctx, slowmode: int = 3):
     await ctx.channel.edit(slowmode_delay = slowmode)
     await ctx.send(f'Set the slowmode to {slowmode} seconds.')
+    if client.update_released:
+        if random.randint(1, 100) >= 75:
+            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
 
 @client.command(aliases = ['nick'])
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def changenick(ctx, member: discord.Member = None, *, nickname: str):
     if member == None:
         member = ctx.author
@@ -2167,6 +2271,7 @@ async def changenick(ctx, member: discord.Member = None, *, nickname: str):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def mute(ctx, member: discord.Member, time_to_unmute_str: str, *, reason: str = 'None'):
     if not is_admin(ctx.message):
         await ctx.send('You can\'t do that, you\'re not allowed to!')
@@ -2233,6 +2338,7 @@ async def mute(ctx, member: discord.Member, time_to_unmute_str: str, *, reason: 
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def unmute(ctx, member: discord.Member):
     if len(ctx.message.mentions) < 1:
         await ctx.send('Invalid user.')
@@ -2262,6 +2368,7 @@ async def unmute(ctx, member: discord.Member):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def warn(ctx, member: discord.Member, *, reason):
     author = await ctx.guild.fetch_member(ctx.author.id)
     if member.top_role.position >= author.top_role.position:
@@ -2282,6 +2389,7 @@ async def warn(ctx, member: discord.Member, *, reason):
 @client.command(aliases = ['remwarn'])
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def removewarn(ctx, member: discord.Member, index: int):
     author = await ctx.guild.fetch_member(ctx.author.id)
     if member.top_role.position >= author.top_role.position:
@@ -2301,6 +2409,7 @@ async def removewarn(ctx, member: discord.Member, index: int):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def clearwarns(ctx, member: discord.Member):
     author = await ctx.guild.fetch_member(ctx.author.id)
     if member.top_role.position >= author.top_role.position:
@@ -2320,6 +2429,7 @@ async def clearwarns(ctx, member: discord.Member):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def addxp(ctx, member: discord.Member, xp_to_add: int):
     author = await ctx.guild.fetch_member(ctx.author.id)
     if member.top_role.position >= author.top_role.position:
@@ -2334,6 +2444,7 @@ async def addxp(ctx, member: discord.Member, xp_to_add: int):
 @client.command(aliases = ['remxp'])
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def removexp(ctx, member: discord.Member, xp_to_remove: int):
     author = await ctx.guild.fetch_member(ctx.author.id)
     if member.top_role.position >= author.top_role.position:
@@ -2348,6 +2459,7 @@ async def removexp(ctx, member: discord.Member, xp_to_remove: int):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def addallxp(ctx, xp: int):
     for member in ctx.guild.members:
         database_functions.add_xp(ctx.guild.id, member.id, xp)
@@ -2359,6 +2471,7 @@ async def addallxp(ctx, xp: int):
 @client.command(aliases = ['remallxp'])
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def removeallxp(ctx, xp: int):
     for member in ctx.guild.members:
         database_functions.remove_xp(ctx.guild.id, member.id, xp)
@@ -2370,6 +2483,7 @@ async def removeallxp(ctx, xp: int):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def clearxp(ctx, member: discord.Member):
     author = await ctx.guild.fetch_member(ctx.author.id)
     if member.top_role.position >= author.top_role.position:
@@ -2384,6 +2498,7 @@ async def clearxp(ctx, member: discord.Member):
 @client.command()
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def clearallxp(ctx):
     for member in ctx.guild.members:
         database_functions.clear_xp(ctx.guild.id, member.id)
@@ -2392,55 +2507,10 @@ async def clearallxp(ctx):
         if random.randint(1, 100) >= 75:
             await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
 
-@client.command()
-@commands.check(is_admin)
-@commands.check(is_text_channel)
-async def addreactionrole(ctx, message: discord.Message, role: discord.Role, emoji: str):
-    print(emoji)
-    try:
-        await message.add_reaction(emoji)
-    except:
-        await ctx.send('I couldn\'t find that emoji.')
-        return
-    if ascii(str(emoji))[0:2] == '<a':
-        await ctx.send('There\'s a bug that doesn\'t allow for animated emojis. Please don\'t use them for reaction roles.')
-    database_functions.add_reaction_role(ctx.guild.id, message.id, role.id, emoji)
-    await ctx.send(embed = add_reaction_role_embed(str(role.id), emoji, ctx.message))
-    if client.update_released:
-        if random.randint(1, 100) >= 75:
-            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
-
-@client.command()
-@commands.check(is_admin)
-@commands.check(is_text_channel)
-async def remreactionrole(ctx, role: discord.Role):
-    database_functions.remove_reaction_role(ctx.guild.id, str(role.id))
-    await ctx.send(embed = remove_reaction_role_embed(str(role.id), ctx.message))
-    if client.update_released:
-        if random.randint(1, 100) >= 75:
-            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
-
-@client.command()
-@commands.check(is_admin)
-@commands.check(is_text_channel)
-async def reactionroles(ctx):
-    await ctx.send(embed = await get_reaction_roles_embed(ctx.message))
-    if client.update_released:
-        if random.randint(1, 100) >= 75:
-            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
-
-@client.command()
-@commands.check(is_admin)
-@commands.check(is_text_channel)
-async def clearreactionroles(ctx):
-    await ctx.send(embed = clear_reaction_roles_embed(ctx.message))
-    if client.update_released:
-        if random.randint(1, 100) >= 75:
-            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
-
 @client.command(aliases = ['sendmsg'])
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def sendmessage(ctx, channel: discord.TextChannel, *, message):
     await ctx.channel.send(f'Sending "`{message}`" in {channel.mention}...')
     await channel.trigger_typing()
@@ -2454,6 +2524,7 @@ async def sendmessage(ctx, channel: discord.TextChannel, *, message):
 @client.command(aliases = ['editmsg'])
 @commands.check(is_admin)
 @commands.check(is_text_channel)
+
 async def editmessage(ctx, message: discord.Message, *, new_message):
     if message.author == client.user:
         await message.edit(content = new_message)
@@ -2657,7 +2728,11 @@ async def mail(ctx, server: discord.Guild, *, message: str):
             print('no category')
             mail_category = await server.create_category(name = 'Mail', overwrites = overwrites)
         channel = await server.create_text_channel(str(ctx.author.id), category = mail_category)
+    await ctx.send(f'Sent {message} to {server.name}\'s admins!')
     await channel.send(f'`{ctx.author}` **says:** {message}')
+    if client.update_released:
+        if random.randint(1, 100) >= 75:
+            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
 
 @client.command()
 @commands.check(is_dm)
@@ -2670,6 +2745,9 @@ async def closemail(ctx, server: discord.Guild):
         await ctx.send('You didn\'t mail the admins of this server, I can\'t close the mail if it doesn\'t exist!')
     else:
         await channel.delete()
+    if client.update_released:
+        if random.randint(1, 100) >= 75:
+            await ctx.send(f'~~New update! Check the {prefix}updates command!~~')
 
 # Only for Captain Ravioli
 @client.command()
@@ -2731,7 +2809,7 @@ def log_embed(message, delete):
 def help_embed(page):
     embed1 = discord.Embed(
         title = '***PAGE 1: Thank you so much for choosing me!***',
-        description = f'Quartermaster Spaghetti is growing, if not by a teeny tiny amount. It would be a lot of help if you contacted my brother Captain Ravioli for suggestions or problems, preferrably in the support server, or alternatively  with the contact support email (quartermasterspaghetti.contact@gmail.com), and if I don\'t reply in 2 days, you can DM him. Thank you again!\n\nPlease create a channel called `bot-setup` and run the command `{prefix}setup` there.\n*You can switch pages with the reactions!*',
+        description = f'Quartermaster Spaghetti is growing, if not by a teeny tiny amount. It would be a lot of help if you contacted my brother Captain Ravioli for suggestions or problems, preferrably in the support server, or alternatively  with the contact support email (quartermasterspaghetti.contact@gmail.com), and if I don\'t reply in 2 days, you can DM him. Thank you again!\n\nPlease create a channel called `bot-setup` and run the command `{prefix}setup` there, if you didn\'t set up the bot yet.\n*You can switch pages with the reactions!*',
         color = discord.Color.from_rgb(255, 255, 0)
     )
     embed1.add_field(
@@ -2741,12 +2819,12 @@ def help_embed(page):
     embed2 = discord.Embed(
         title = '***PAGE 2: Global Commands:***',
         description =
-        f'**{prefix}about / {prefix}help**\nYou just activated this command!\n**{prefix}ping / {prefix}pong**\nShows the bot\'s ping\n**{prefix}avatar <(optional) user_ping>**\nShows the mentioned user\'s avatar.\n**{prefix}userinfo / {prefix}ui <(optional) user_ping>**\nShows some information about the mentioned user or the sender.\n**{prefix}serverinfo / {prefix}si**\nShows some information about the server that you called the command in.\n**{prefix}showwarns / {prefix}warns / {prefix}warnings / {prefix}showwarnings <(optional) user_ping>**\nShows the author\'s or mentioned user\'s warnings.\n**{prefix}leaderboard**\nShows the server\'s leaderboard.\n**{prefix}level**\nShows some of the sender\'s info related to levels.\n**{prefix}covid <country_name>**\nSends some COVID-19 information about the country. By default, the global information is chosen.\n**{prefix}covidcountrylist**\nShows a list of supported country names.\n**{prefix}updates**\nCalling this sends the latest update that Captain Ravioli sent.',
+        f'**{prefix}about / {prefix}help**\nYou just activated this command!\n**{prefix}ping / {prefix}pong**\nShows the bot\'s ping\n**{prefix}avatar <(optional) user_ping>**\nShows the mentioned user\'s avatar.\n**{prefix}userinfo / {prefix}ui <(optional) user_ping>**\nShows some information about the mentioned user or the sender.\n**{prefix}serverinfo / {prefix}si**\nShows some information about the server that you called the command in.\n**{prefix}showwarns / {prefix}warns / {prefix}warnings / {prefix}showwarnings <(optional) user_ping>**\nShows the author\'s or mentioned user\'s warnings.\n**{prefix}leaderboard**\nShows the server\'s leaderboard.\n**{prefix}level**\nShows some of the sender\'s info related to levels.\n**{prefix}covid <country_name>**\nSends some COVID-19 information about the country. By default, the global information is chosen.\n**{prefix}covidcountrylist**\nShows a list of supported country names.\n**{prefix}ascii <(optional) user_ping>**\nConverts the sender\'s logo to an ASCII text file.\n**{prefix}blur <(optional) intensity> <(optional) user_ping>**\nSends a blurred image of the sender\'s or the mentioned user\'s profile picture.\n**{prefix} contour <(optional) user_ping>**\nSends a contoured verssion of the sender\'s or the mentioned user\'s profile picture.\n**{prefix}emboss <(optional) user_ping>**\nSends an embossed image of the sender\'s or the mentioned user\'s profile picture.\n**{prefix}gay <(optional) user_ping>**\ngae\n**{prefix}petpet (any order) <(optional) speed> <(optional) user_ping>**\nSends a petpet gif of the sender\'s or the mentioned user\'s profile picture.\n**{prefix}updates**\nCalling this sends the latest update that Captain Ravioli sent.',
         color=discord.Color.blue()
     )
     embed3 = discord.Embed(
         title = '***PAGE 3: Admin Commands 1:***',
-        description = f'**{prefix}changenick / {prefix}nick <user_to_change_nickname_mention> <new_nickname>**\nChanges the mentioned user\'s nickname.\n**{prefix}mute <user_ping> <time_to_mute><timespan_abbreviation> <reason>**\nMutes the mentioned user for a specified amount of time. <timespan_abbreviation> can be `s`, `min`, `h`, `d`, `wk`, `mon`, and `y`.\n**{prefix}unmute <user_ping>**\nUnmutes the mentioned user.\n**{prefix}warn <user_ping> <reason>**\nWarns the mentioned user. \n**{prefix}removewarn / {prefix}remwarn <user_ping> <index>**\nRemoves the `n`\'th warning of the mentioned user.\n**{prefix}clearwarns <user_ping>**\nClears all warnings of the mentioned user.\n**{prefix}addxp <user_mention> <xp_num>**\nAdds the specified number of XP to the mentioned user.\n**{prefix}removexp / {prefix}remxp <user_mention> <xp_num>**\nRemoves the specified number of XP from the mentioned user.\n**{prefix}clearxp <user_mention>**\nResets the mentioned user\'s XP to 0.\n**{prefix}clearallxp**\nClears everyone\'s XP in the server.\n**{prefix}addreactionrole <message_link> <role_id/name> <emoji>**\nAdds a reaction role to the message. There\'s a bug that doesn\'t check for animated emojis, so don\'t use them. Other custom emojis in the server or unicode emojis are okay.\n**{prefix}remreactionrole <role_id/name>**\nRemoves the reaction role. If you pass in a role that doesn\'t exist, there won\'t be any problems.\n**{prefix}reactionroles**\nGets the reaction roles. Gives "None" if none are set.\n**{prefix}clearreactionroles**\nClears all of the reaction roles in the server.',
+        description = f'**{prefix}changenick / {prefix}nick <user_to_change_nickname_mention> <new_nickname>**\nChanges the mentioned user\'s nickname.\n**{prefix}mute <user_ping> <time_to_mute><timespan_abbreviation> <reason>**\nMutes the mentioned user for a specified amount of time. <timespan_abbreviation> can be `s`, `min`, `h`, `d`, `wk`, `mon`, and `y`.\n**{prefix}unmute <user_ping>**\nUnmutes the mentioned user.\n**{prefix}warn <user_ping> <reason>**\nWarns the mentioned user. \n**{prefix}removewarn / {prefix}remwarn <user_ping> <index>**\nRemoves the `n`\'th warning of the mentioned user.\n**{prefix}clearwarns <user_ping>**\nClears all warnings of the mentioned user.\n**{prefix}addxp <user_mention> <xp_num>**\nAdds the specified number of XP to the mentioned user.\n**{prefix}removexp / {prefix}remxp <user_mention> <xp_num>**\nRemoves the specified number of XP from the mentioned user.\n**{prefix}clearxp <user_mention>**\nResets the mentioned user\'s XP to 0.\n**{prefix}clearallxp**\nClears everyone\'s XP in the server.',
         color = discord.Color.blue()
     )
     embed4 = discord.Embed(
@@ -2766,7 +2844,8 @@ def help_embed(page):
     )
     embed7 = discord.Embed(
         title = '***PAGE 7: Games 2***',
-        description = f'*Minesweeper:*\n**{prefix}minesweeper <dimension_size (default: 10)> <num_bombs (default: 10)>**\nStarts a new Minesweeper game and abandons any previous games.\n**{prefix}d <x> <y>**\nDigs at that position.\n**{prefix}f <x> <y>**\nToggles a flag at that position.\n**{prefix}end**\nEnds the game.\n\nThe minimum dimension size is 5, and the maximun is 12 due to Discord limitations. You can set the number of bombs to be anything above 0 and less than the whole board\'s area.\n\n*Hangman:*\n**{prefix}hangman**\nStarts a new Hangman game.\n\nTo play, start a game and guess a letter or word by sending one. That\'s it!'
+        description = f'*Minesweeper:*\n**{prefix}minesweeper <dimension_size (default: 10)> <num_bombs (default: 10)>**\nStarts a new Minesweeper game and abandons any previous games.\n**{prefix}d <x> <y>**\nDigs at that position.\n**{prefix}f <x> <y>**\nToggles a flag at that position.\n**{prefix}end**\nEnds the game.\n\nThe minimum dimension size is 5, and the maximun is 12 due to Discord limitations. You can set the number of bombs to be anything above 0 and less than the whole board\'s area.\n\n*Hangman:*\n**{prefix}hangman**\nStarts a new Hangman game.\n\nTo play, start a game and guess a letter or word by sending one. That\'s it!',
+        color = discord.Color.blue()
     )
     embeds = [embed1, embed2, embed3, embed4, embed5, embed6, embed7]
     return embeds[page]
@@ -3090,6 +3169,18 @@ def level_embed(message, member):
     embed.set_footer(text='Quartermaster Spaghetti · ' + timeSent)
     return embed
 
+def ascii_embed(ctx):
+    author = ctx.author
+    embed = discord.Embed(
+        title = 'Successful `ASCII` Conversion!',
+        color = discord.Color.dark_green()
+    )
+    timeSent = datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
+    embed.set_footer(text='Quartermaster Spaghetti · ' + timeSent)
+    embed.set_author(name=author.name, icon_url=author.avatar_url)
+
+    return embed
+
 def hangman_embed(msg, author, desc):
     embed = discord.Embed(
         title = 'Let\'s play Hangman!',
@@ -3265,56 +3356,6 @@ def embed_embed(title, description, color, msg):
     embed.set_author(name=msg.author.name, icon_url=msg.author.avatar_url)
     return embed
 
-def add_reaction_role_embed(role_id, emoji, msg):
-    embed = discord.Embed(
-        title = 'Successfully added reaction role!',
-        description = f'Added reaction role <@&{role_id}> with emoji {emoji}',
-        color = discord.Color.green())
-    timeSent = datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
-    embed.set_footer(text='Quartermaster Spaghetti · ' + timeSent)
-    embed.set_author(name=msg.author.name, icon_url=msg.author.avatar_url)
-    return embed
-
-def remove_reaction_role_embed(role_id, msg):
-    embed = discord.Embed(
-        title = 'Successfully removed reaction role!',
-        description = f'Removed reaction role <@&{role_id}>',
-        color = discord.Color.green())
-    timeSent = datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
-    embed.set_footer(text='Quartermaster Spaghetti · ' + timeSent)
-    embed.set_author(name=msg.author.name, icon_url=msg.author.avatar_url)
-    return embed
-
-async def get_reaction_roles_embed(msg):
-    reaction_roles = database_functions.get_reaction_roles(msg.guild.id)
-    new_rr = ''
-    async for x in reaction_roles.splitlines():
-        split = x.split()
-        emoji = split[2]
-        if not emoji.startswith('<'):
-            emoji = split[2][1:-1]
-        new_rr += f'<@&{split[1]}>: {ascii(emoji)}\n'
-    if new_rr == '':
-        new_rr = 'None'
-    embed = discord.Embed(
-        title = f'Reaction roles in {msg.guild.name}',
-        description = new_rr,
-        color = discord.Color.blue())
-    timeSent = datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
-    embed.set_footer(text='Quartermaster Spaghetti · ' + timeSent)
-    embed.set_author(name=msg.author.name, icon_url=msg.author.avatar_url)
-    return embed
-
-def clear_reaction_roles_embed(msg):
-    embed = discord.Embed(
-        title = 'Successfully cleared all reaction roles!',
-        description = f'Cleared all of {msg.guild.name}\'s reaction roles',
-        color = discord.Color.red())
-    timeSent = datetime.datetime.now().strftime('%d/%m/%Y, %H:%M:%S')
-    embed.set_footer(text='Quartermaster Spaghetti · ' + timeSent)
-    embed.set_author(name=msg.author.name, icon_url=msg.author.avatar_url)
-    return embed
-
 def kick_embed(message, member, reason, author):
     embed = discord.Embed(
         title='Kick command successful!',
@@ -3362,4 +3403,4 @@ def unlock_embed(author):
 
     return embed
 
-client.run(os.environ['TOKEN'])
+client.run('ODAwNjIwMjc0NjA5MTYwMTky.YAUxvA.eg18QuYGzjsI_UbvojT6fZXNYYc')#os.environ['TOKEN'])
